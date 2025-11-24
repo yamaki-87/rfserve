@@ -1,0 +1,38 @@
+name: Build for Raspberry Pi (aarch64, native arm runner)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-rpi-arm64:
+    runs-on: ubuntu-latest-arm
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pkg-config \
+            libssl-dev \
+            ca-certificates
+
+      - name: Build (aarch64-unknown-linux-gnu)
+        run: |
+          rustup target add aarch64-unknown-linux-gnu
+          cargo build --release --target aarch64-unknown-linux-gnu
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfserve
+          path: target/release/rfserve
