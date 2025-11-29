@@ -26,14 +26,28 @@ impl<T: YtHisotryMapper, S: DownloadLinksMapper> RegisterService<T, S> {
         }
     }
 
-    pub async fn execute(&self, yt_history_id: i64) -> Result<RegisterServiceOutput> {
-        let record = self.yt_mapper.select_one_with_id(yt_history_id).await?;
+    fn data_check(&self, record: &Option<YtHistory>, yt_history_id: i64) -> Result<()> {
         if record.is_none() {
-            return Err(anyhow!(format!(
+            return Err(anyhow!(
                 "指定されたIDが存在しません。 id = {}",
                 yt_history_id
-            )));
+            ));
         }
+        let is_external_id_emp = record
+            .as_ref()
+            .map(|e| e.app_external_id.trim().is_empty())
+            .unwrap_or(true);
+        if is_external_id_emp {
+            return Err(anyhow!("外部キーが空文字です。 id = {}", yt_history_id));
+        }
+
+        Ok(())
+    }
+
+    pub async fn execute(&self, yt_history_id: i64) -> Result<RegisterServiceOutput> {
+        let record = self.yt_mapper.select_one_with_id(yt_history_id).await?;
+        self.data_check(&record, yt_history_id)?;
+
         let insert = self.create_download_links_entity(record)?;
         let output = RegisterServiceOutput {
             url: insert.url.clone(),
@@ -60,7 +74,7 @@ impl<T: YtHisotryMapper, S: DownloadLinksMapper> RegisterService<T, S> {
             .url(url)
             .created_at(now)
             .expires_at(expired)
-            .object_path(record.title)
+            .object_path(record.app_external_id)
             .build()?;
 
         Ok(result)

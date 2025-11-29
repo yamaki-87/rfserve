@@ -5,6 +5,7 @@ use sqlx::prelude::FromRow;
 pub struct YtHistory {
     pub id: i32,
     pub title: String,
+    pub app_external_id: String,
 }
 
 pub trait YtHisotryMapper {

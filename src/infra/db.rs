@@ -50,7 +50,7 @@ impl YtHisotryMapper for YtHistoryMapperImpl {
     ) -> anyhow::Result<Option<crate::domain::yt_hisotry::YtHistory>> {
         let record = sqlx::query_as::<_, YtHistory>(
             r#"
-            SELECT id,title FROM yt_history WHERE id = $1
+            SELECT id,title,app_external_id FROM yt_history WHERE id = $1
             "#,
         )
         .bind(id)
